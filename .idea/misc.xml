@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/drawable/bg_dotted_rectangle_grey.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/drawable/ic_add.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/drawable/ic_warning.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/drawable/progress_bar_circle.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/layout/activity_add_recipe.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/layout/activity_main.xml" value="0.1796875" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/layout/activity_recipe_detail.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/layout/activity_recipe_list.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/layout/activity_update_recipe.xml" value="0.14130434782608695" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/layout/recipe_item_list.xml" value="0.12" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/menu/custom_menu.xml" value="0.1" />
+        <entry key="..\:/Users/PC/Desktop/AndroidStudioProjects/RecipeApplication/app/src/main/res/menu/menu_back.xml" value="0.1" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

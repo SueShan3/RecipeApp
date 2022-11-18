@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">Recipe Application</string>
+
+    //** MainActivity **//
+    <string name="nothing_select">Nothing selected</string>
+    <string name="search">Search</string>
+
+    //** AddRecipeActivity **//
+    <string name="select">-Select Recipe Type-</string>
+    <string name="update">Update</string>
+    <string name="validation">Please fill up all recipe info!</string>
+    <string name="success_updated">Successful Updated Recipe!</string>
+    <string name="fail_updated">Failed to update recipe!</string>
+    <string name="success_added">Recipe Data Added!</string>
+    <string name="fail_added">Failed to add recipe!</string>
+    <string name="add_photo">Add Photo</string>
+    <string name="hint_name">Recipe Name</string>
+    <string name="hint_desc">Recipe Description</string>
+    <string name="hint_ingredients">Recipe Ingredients</string>
+    <string name="hint_steps">Recipe Steps</string>
+    <string name="cancel">Cancel</string>
+    <string name="add">Add</string>
+
+    //** RecipeDetailActivity **//
+    <string name="r_type">Recipe Type: </string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="delete_message">Are you sure delete this Recipe?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="success_deleted">Deleted this Recipe!</string>
+    <string name="fail_deleted">Failed to delete this Recipe!</string>
+    <string name="ingredients">Ingredients:</string>
+    <string name="steps">Steps:</string>
+
+</resources>
