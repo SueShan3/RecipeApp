@@ -77,7 +77,6 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
             intent.action = Intent.ACTION_GET_CONTENT
             intent.type = "image/*"
             startActivityForResult(intent, REQUEST_CODE)
-            dataBinding.selectImg.isClickable = true
         }
 
         dataBinding.cancelImage.setOnClickListener {
