@@ -1,6 +1,5 @@
 package com.example.recipeapplication
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -8,6 +7,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
@@ -19,8 +19,6 @@ import com.example.recipeapplication.model.Recipe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private const val REQUEST_CODE = 1234
 
 class RecipeDetailActivity : AppCompatActivity() {
 
@@ -36,6 +34,19 @@ class RecipeDetailActivity : AppCompatActivity() {
     private lateinit var dataBinding: ActivityRecipeDetailBinding
     private var recipe: Recipe? = null
 
+    // Replaces startActivityForResult + onActivityResult
+    private val editLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val updated = result.data?.getParcelableExtra<Recipe>("recipeModel")
+            if (updated != null) {
+                recipe = updated
+                showRecipe(updated)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -44,12 +55,18 @@ class RecipeDetailActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val intent: Intent = intent
-        recipe = intent.getParcelableExtra<Recipe>("recipe_key")
-        dataBinding.rTitle.text = recipe?.recipeName
-        dataBinding.rType.text = getString(R.string.r_type) + recipe?.recipeType
-        Glide.with(this).load(recipe?.recipeImg).into(dataBinding.rImage)
-        dataBinding.rIngredient.text = recipe?.recipeIngredients
-        dataBinding.rSteps.text = recipe?.recipeSteps
+        recipe = intent.getParcelableExtra("recipe_key")
+        recipe?.let {
+            showRecipe(it)
+        }
+    }
+
+    private fun showRecipe(r: Recipe) {
+        dataBinding.rTitle.text = r.recipeName
+        dataBinding.rType.text = getString(R.string.r_type, r.recipeType)
+        Glide.with(this).load(r.recipeImg).into(dataBinding.rImage)
+        dataBinding.rIngredient.text = r.recipeIngredients
+        dataBinding.rSteps.text = r.recipeSteps
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -60,8 +77,10 @@ class RecipeDetailActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.edit -> {
-                startActivityForResult(AddRecipeActivity.start(this, recipe!!), REQUEST_CODE)
-                return true
+                recipe?.let {
+                    editLauncher.launch(AddRecipeActivity.start(this, it))
+                }
+                true
             }
 
             R.id.delete -> {
@@ -78,7 +97,7 @@ class RecipeDetailActivity : AppCompatActivity() {
                     }
                     .create()
                     .show()
-                return true
+                true
             }
 
             else -> super.onOptionsItemSelected(item)
@@ -93,20 +112,6 @@ class RecipeDetailActivity : AppCompatActivity() {
             Toast.makeText(this@RecipeDetailActivity, R.string.success_deleted, Toast.LENGTH_SHORT)
                 .show()
             finish()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val recipeData = data?.getParcelableExtra<Recipe>("recipeModel")
-
-            dataBinding.rTitle.text = recipeData?.recipeName
-            dataBinding.rType.text = "Recipe Type: " + recipeData?.recipeType
-            Glide.with(this).load(recipeData?.recipeImg).into(dataBinding.rImage)
-            dataBinding.rIngredient.text = recipeData?.recipeIngredients
-            dataBinding.rSteps.text = recipeData?.recipeSteps
         }
     }
 

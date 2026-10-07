@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     override fun onItemSelected(parent: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-        var recipeType = parent?.getItemAtPosition(pos).toString()
+        val recipeType = parent?.getItemAtPosition(pos).toString()
 
         dataBinding.search.setOnClickListener{
             when(pos){

@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
@@ -19,8 +20,6 @@ import com.example.recipeapplication.model.Recipe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private const val REQUEST_CODE = 45
 
 class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
@@ -38,12 +37,23 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
     private var selectedImg: Uri? = null
     private var recipeData: Recipe? = null
 
+    // Replaces startActivityForResult + onActivityResult for the image picker
+    private val pickImage = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            selectedImg = it
+            dataBinding.recipeImg.setImageURI(it)
+            dataBinding.cancelImage.visibility = View.VISIBLE
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_add_recipe)
 
-        recipeData = intent.getParcelableExtra<Recipe>("pre_data")
+        recipeData = intent.getParcelableExtra("pre_data")
 
         val adapter = ArrayAdapter.createFromResource(
             this,
@@ -70,10 +80,7 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
         }
 
         dataBinding.selectImg.setOnClickListener {
-            val intent = Intent()
-            intent.action = Intent.ACTION_GET_CONTENT
-            intent.type = "image/*"
-            startActivityForResult(intent, REQUEST_CODE)
+            pickImage.launch("image/*")
         }
 
         dataBinding.cancelImage.setOnClickListener {
@@ -88,7 +95,7 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
         }
 
         dataBinding.btnCancel.setOnClickListener {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
         }
     }
 
@@ -151,16 +158,5 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
 
     override fun onNothingSelected(p0: AdapterView<*>?) {
         Toast.makeText(this, R.string.nothing_select, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
-            data?.data?.let { uri ->
-                selectedImg = uri
-                dataBinding.recipeImg.setImageURI(uri)
-                dataBinding.cancelImage.visibility = View.VISIBLE
-            }
-        }
     }
 }

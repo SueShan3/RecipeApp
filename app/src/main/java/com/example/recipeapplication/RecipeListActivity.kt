@@ -14,12 +14,9 @@ import com.example.recipeapplication.model.Recipe
 import com.example.recipeapplication.viewmodel.RecipeListAdapter
 import kotlinx.coroutines.launch
 
-private const val REQUEST_CODE = 2345
-
 class RecipeListActivity : AppCompatActivity(), RecipeListAdapter.OnItemClickListener {
 
     private lateinit var dataBinding: ActivityRecipeListBinding
-    private lateinit var recipeList: ArrayList<Recipe>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,8 +27,6 @@ class RecipeListActivity : AppCompatActivity(), RecipeListAdapter.OnItemClickLis
 
         // showing the back button in action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        recipeList = ArrayList()
 
         val recipeType = intent.getStringExtra("rType") ?: return
         val dao = AppDatabase.getInstance(this).recipeDao()
@@ -47,6 +42,8 @@ class RecipeListActivity : AppCompatActivity(), RecipeListAdapter.OnItemClickLis
                             ArrayList(list),
                             this@RecipeListActivity
                         )
+                    dataBinding.emptyText.visibility =
+                        if (list.isEmpty()) View.VISIBLE else View.GONE
                     dataBinding.progressBar.visibility = View.GONE
                 }
             }
@@ -54,11 +51,11 @@ class RecipeListActivity : AppCompatActivity(), RecipeListAdapter.OnItemClickLis
     }
 
     override fun onItemClick(recipe: Recipe) {
-        startActivityForResult(RecipeDetailActivity.start(this, recipe), REQUEST_CODE)
+        startActivity(RecipeDetailActivity.start(this, recipe))
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 }
