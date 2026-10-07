@@ -10,20 +10,23 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.example.recipeapplication.data.AppDatabase
+import com.example.recipeapplication.data.ImageStorage
 import com.example.recipeapplication.databinding.ActivityAddRecipeBinding
 import com.example.recipeapplication.model.Recipe
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
-import java.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val REQUEST_CODE = 45
 
 class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
-    companion object{
-        fun start(context: Context, recipe: Recipe): Intent{
-            val intent = Intent(context, AddRecipeActivity::class.java).apply{
+    companion object {
+        fun start(context: Context, recipe: Recipe): Intent {
+            val intent = Intent(context, AddRecipeActivity::class.java).apply {
                 putExtra("pre_data", recipe)
             }
             return (intent)
@@ -32,20 +35,14 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
 
     private lateinit var dataBinding: ActivityAddRecipeBinding
     private var rType = ""
-    private lateinit var database: FirebaseDatabase
-    private lateinit var storage: FirebaseStorage
-    private var selectedImg : Uri ?= null
-    private var recipeData: Recipe ?= null
+    private var selectedImg: Uri? = null
+    private var recipeData: Recipe? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_add_recipe)
 
-        database = FirebaseDatabase.getInstance()
-        storage = FirebaseStorage.getInstance()
-
-        val intent: Intent = intent
         recipeData = intent.getParcelableExtra<Recipe>("pre_data")
 
         val adapter = ArrayAdapter.createFromResource(
@@ -60,7 +57,7 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
             dataBinding.recipeType.onItemSelectedListener = this
         }
 
-        if (recipeData != null){
+        if (recipeData != null) {
             dataBinding.recipeNameEt.setText(recipeData?.recipeName)
             dataBinding.recipeDescEt.setText(recipeData?.recipeDesc)
             val spinnerPosition: Int = adapter.getPosition(recipeData?.recipeType)
@@ -72,7 +69,7 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
             dataBinding.btnAdd.text = getString(R.string.update)
         }
 
-        dataBinding.selectImg.setOnClickListener{
+        dataBinding.selectImg.setOnClickListener {
             val intent = Intent()
             intent.action = Intent.ACTION_GET_CONTENT
             intent.type = "image/*"
@@ -80,6 +77,7 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
         }
 
         dataBinding.cancelImage.setOnClickListener {
+            selectedImg = null
             dataBinding.recipeImg.setImageURI(null)
             dataBinding.cancelImage.visibility = View.GONE
         }
@@ -95,79 +93,56 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
     }
 
     private fun checkValue() {
-        if(dataBinding.recipeNameEt.text?.isNotEmpty()!! && dataBinding.recipeDescEt.text?.isNotEmpty()!! && selectedImg != null &&
-            dataBinding.recipeIngredientsEt.text?.isNotEmpty()!! && dataBinding.recipeStepsEt.text?.isNotEmpty()!! &&
-            rType != getString(R.string.select) ){
-            uploadImage()
-        } else if (recipeData != null && selectedImg == null){
-            updateData(recipeData?.recipeImg.toString())
-        }else{
+        val name = dataBinding.recipeNameEt.text.toString()
+        val desc = dataBinding.recipeDescEt.text.toString()
+        val ingredients = dataBinding.recipeIngredientsEt.text.toString()
+        val steps = dataBinding.recipeStepsEt.text.toString()
+        val hasImage = selectedImg != null || recipeData != null
+
+        if (name.isEmpty() || desc.isEmpty() || ingredients.isEmpty() || steps.isEmpty() || rType == getString(
+                R.string.select
+            ) || !hasImage
+        ) {
             Toast.makeText(this, R.string.validation, Toast.LENGTH_SHORT).show()
+            dataBinding.progressBar.visibility = View.GONE
+            return
         }
-    }
 
-    private fun updateData(imgUrl: String) {
-        val data = mapOf<String, String>(
-            "recipeName" to dataBinding.recipeNameEt.text.toString(),
-            "recipeDesc" to dataBinding.recipeDescEt.text.toString(),
-            "recipeImg" to imgUrl,
-            "recipeType" to rType,
-            "recipeIngredients" to dataBinding.recipeIngredientsEt.text.toString(),
-            "recipeSteps" to dataBinding.recipeStepsEt.text.toString()
-        )
-
-        val recipeData = Recipe(recipeData?.id!!, dataBinding.recipeNameEt.text.toString(), rType, imgUrl,
-            dataBinding.recipeDescEt.text.toString(), dataBinding.recipeIngredientsEt.text.toString(), dataBinding.recipeStepsEt.text.toString())
-
-        database.reference.child("recipeInfo")
-            .child(recipeData?.id!!)
-            .updateChildren(data)
-            .addOnSuccessListener {
-                Toast.makeText(this, R.string.success_updated, Toast.LENGTH_SHORT).show()
-                // Pass the value using Intent
-                val intent = Intent()
-                intent.putExtra("recipeModel", recipeData)
-                // Send data to RecipeDetailActivity
-                setResult(RESULT_OK, intent)
-                finish()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, R.string.fail_updated, Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun uploadImage() {
-        val reference = storage.reference.child("Recipes").child(Date().time.toString())
-        reference.putFile(selectedImg!!).addOnCompleteListener{
-            if(it.isSuccessful){
-                reference.downloadUrl.addOnSuccessListener { task->
-                    if(recipeData != null){
-                        updateData(task.toString())
-                    }else{
-                        uploadInfo(task.toString())
+        lifecycleScope.launch {
+            val imgPath = selectedImg?.let { uri ->
+                withContext(Dispatchers.IO) {
+                    recipeData?.let {
+                        ImageStorage.delete(it.recipeImg)
                     }
+                    ImageStorage.copy(this@AddRecipeActivity, uri)
                 }
+            } ?: recipeData!!.recipeImg
+
+            val recipe = Recipe(
+                id = recipeData?.id ?: 0,
+                recipeName = name,
+                recipeType = rType,
+                recipeImg = imgPath,
+                recipeDesc = desc,
+                recipeIngredients = ingredients,
+                recipeSteps = steps
+            )
+
+            val dao = AppDatabase.getInstance(applicationContext).recipeDao()
+
+            if (recipeData != null) {
+                dao.update(recipe)
+                setResult(RESULT_OK, Intent().putExtra("recipeModel", recipe))
+                Toast.makeText(this@AddRecipeActivity, R.string.success_updated, Toast.LENGTH_SHORT)
+                    .show()
+            } else {
+                dao.insert(recipe)
+                Toast.makeText(this@AddRecipeActivity, R.string.success_added, Toast.LENGTH_SHORT)
+                    .show()
             }
+            dataBinding.progressBar.visibility = View.GONE
+            finish()
         }
-    }
-
-    private fun uploadInfo(imgUrl:String) {
-        val id: String? = database.reference.push().key
-
-        val recipe = Recipe(id, dataBinding.recipeNameEt.text.toString(), rType, imgUrl,
-            dataBinding.recipeDescEt.text.toString(), dataBinding.recipeIngredientsEt.text.toString(), dataBinding.recipeStepsEt.text.toString())
-
-        database.reference.child("recipeInfo")
-            .child(id!!)
-            .setValue(recipe)
-            .addOnSuccessListener {
-                Toast.makeText(this, R.string.success_added, Toast.LENGTH_SHORT).show()
-                dataBinding.progressBar.visibility = View.GONE
-                finish()
-            }
-            .addOnFailureListener{
-                Toast.makeText(this, R.string.fail_added, Toast.LENGTH_SHORT).show()
-            }
     }
 
     override fun onItemSelected(parent: AdapterView<*>?, v: View?, pos: Int, id: Long) {
@@ -180,13 +155,11 @@ class AddRecipeActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE){
-            if(data != null){
-                if(data.data != null){
-                    selectedImg = data.data!!
-                    dataBinding.recipeImg.setImageURI(selectedImg)
-                    dataBinding.cancelImage.visibility = View.VISIBLE
-                }
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+            data?.data?.let { uri ->
+                selectedImg = uri
+                dataBinding.recipeImg.setImageURI(uri)
+                dataBinding.cancelImage.visibility = View.VISIBLE
             }
         }
     }
